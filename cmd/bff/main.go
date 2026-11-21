@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/laurentpoirierfr/go-bff-skeleton/internal/compose"
 	"github.com/laurentpoirierfr/go-bff-skeleton/internal/platform/config"
 	"github.com/laurentpoirierfr/go-bff-skeleton/internal/platform/health"
 	"github.com/laurentpoirierfr/go-bff-skeleton/internal/platform/httpmw"
@@ -77,9 +78,18 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	proxy.Register(mux, routes, proxy.Options{MaxBodyBytes: cfg.Proxy.MaxBodyBytes, Transport: proxy.Transport(), Log: log})
+	transport := proxy.Transport()
+	proxy.Register(mux, routes, proxy.Options{MaxBodyBytes: cfg.Proxy.MaxBodyBytes, Transport: transport, Log: log})
 	for _, r := range routes {
 		log.Info("route", "name", r.Name, "prefix", r.Prefix, "target", r.Target.Redacted(), "timeout", r.Timeout)
+	}
+	// Les API de composition appellent les backends des routes users et
+	// orders ; sans elles, il n'y a rien à composer.
+	if users, orders, ok := composeBackends(routes); ok {
+		compose.New(users, orders, transport, log).Register(mux)
+		log.Info("composition", "endpoints", "/api/dashboard, /api/profiles/{id}")
+	} else {
+		log.Warn("composition disabled: routes users and orders are required")
 	}
 
 	srv := &http.Server{
@@ -105,6 +115,17 @@ func proxyRoutes(cfg config.Config) ([]proxy.Route, error) {
 		routes = append(routes, proxy.Route{Name: name, Prefix: r.Prefix, Target: target, Timeout: r.Timeout})
 	}
 	return routes, nil
+}
+
+// composeBackends trouve les backends des routes users et orders.
+func composeBackends(routes []proxy.Route) (users, orders compose.Backend, ok bool) {
+	found := map[string]compose.Backend{}
+	for _, r := range routes {
+		found[r.Name] = compose.Backend{Name: r.Name, URL: r.Target, Timeout: r.Timeout}
+	}
+	users, okU := found["users"]
+	orders, okO := found["orders"]
+	return users, orders, okU && okO
 }
 
 // configOptions lit les options de la ligne de commande : le fichier désigné
