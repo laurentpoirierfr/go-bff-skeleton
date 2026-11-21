@@ -1,0 +1,46 @@
+{
+    // Lancement et débogage (extension Go, débogueur Delve).
+    // « BFF + mocks » démarre d'abord le collecteur et Jaeger (make up), puis
+    // les deux services simulés et le BFF, configuré par configs/bff.yaml.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "bff",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/bff",
+            "args": ["-config", "configs/bff.yaml"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "mock-users",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/mock-users",
+            "args": ["-address", ":8091", "-telemetry-endpoint", "http://localhost:4318"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "mock-orders",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/mock-orders",
+            "args": ["-address", ":8092", "-telemetry-endpoint", "http://localhost:4318"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "BFF + mocks",
+            "configurations": ["mock-users", "mock-orders", "bff"],
+            "preLaunchTask": "dépendances : démarrer",
+            "stopAll": true
+        }
+    ]
+}

@@ -1,0 +1,35 @@
+{
+    // Tâches utilisées par launch.json, et disponibles dans « Run Task ».
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "dépendances : démarrer",
+            "detail": "collecteur OpenTelemetry et Jaeger (make up), attend qu'ils soient prêts",
+            "type": "shell",
+            "command": "make up",
+            "problemMatcher": []
+        },
+        {
+            "label": "frontend : construire",
+            "detail": "make web : npm ci et npm run build (conteneur Node), pour que le BFF embarque l'application",
+            "type": "shell",
+            "command": "make web",
+            "problemMatcher": []
+        },
+        {
+            "label": "frontend : serveur de développement",
+            "detail": "make web-dev : Vite sur http://localhost:5173, rechargement à chaud, /api vers le BFF",
+            "type": "shell",
+            "command": "make web-dev",
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "dépendances : arrêter",
+            "detail": "make down : arrête les conteneurs et supprime leurs données",
+            "type": "shell",
+            "command": "make down",
+            "problemMatcher": []
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+# Seuls les sources entrent dans le contexte de construction : plus rapide, et
+# aucun fichier local ne fuit dans l'image. Le build du frontend est refait
+# dans l'image (étape web).
+.git
+.github
+bin/
+coverage.*
+*.prof
+.env
+.idea/
+.vscode/
+.claude/
+frontend/node_modules/
+frontend/dist/
+Dockerfile
+compose.yaml

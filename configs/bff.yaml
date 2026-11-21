@@ -1,0 +1,24 @@
+# Configuration du BFF pour le développement local (make up, make mocks).
+#
+# Ce fichier ne contient que ce qui diffère des valeurs par défaut : toutes les
+# clés, leur rôle et leur variable d'environnement sont dans reference.yaml.
+# Pour voir la configuration effective et d'où vient chaque valeur :
+#   go run ./cmd/bff -print-config
+
+# La table de routage : /api/users/42 est relayé vers
+# http://localhost:8091/api/v1/users/42. En production, changer une cible par
+# l'environnement : ROUTES_USERS_TARGET=http://users.prod/api/v1/users.
+routes:
+  users:
+    prefix: /api/users
+    target: http://localhost:8091/api/v1/users
+    timeout: 5s
+  orders:
+    prefix: /api/orders
+    target: http://localhost:8092/api/v1/orders # délai : proxy.default_timeout
+
+telemetry:
+  enabled: true # vers le collecteur de compose.yaml (http://localhost:4318)
+
+log:
+  format: text # lisible dans un terminal ; json par défaut, pour les collecteurs

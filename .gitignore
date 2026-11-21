@@ -11,5 +11,14 @@ coverage.*
 # Réglages locaux
 .env
 .idea/
-.vscode/
+# VS Code : les lancements et les tâches sont partagés, le reste est personnel.
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
 .claude/settings.local.json
+
+# Frontend : les dépendances et le build ne sont pas versionnés ; dist/.gitkeep
+# l'est, pour que go:embed compile avant le premier build.
+frontend/node_modules/
+frontend/dist/*
+!frontend/dist/.gitkeep

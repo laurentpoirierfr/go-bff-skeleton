@@ -1,0 +1,79 @@
+# Référence de la configuration, générée à partir du code
+# (internal/platform/config) : ne pas modifier à la main, lancer
+# « make config-reference ».
+#
+# Ordre de priorité : valeurs par défaut (ci-dessous), puis le fichier YAML
+# (configs/bff.yaml, ou -config), puis les variables d'environnement. Chaque
+# clé a sa variable : la clé en majuscules, les points remplacés par « _ ».
+#
+# Pour voir la configuration effective, et d'où vient chaque valeur :
+#   go run ./cmd/bff -print-config
+
+# Identité du service
+service:
+  # Nom du service dans les journaux et les traces
+  # env : SERVICE_NAME
+  name: "bff"
+
+# Serveur HTTP
+http:
+  # Adresse d'écoute
+  # env : HTTP_ADDRESS
+  address: ":8080"
+
+# Application web embarquée (le build de web/)
+web:
+  # Politique de sécurité du contenu (Content-Security-Policy) des pages
+  # env : WEB_CSP
+  csp: "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+
+# Proxy vers les API (réglages communes à toutes les routes)
+proxy:
+  # Délai d'une requête vers un backend, si la route n'en fixe pas
+  # env : PROXY_DEFAULT_TIMEOUT
+  default_timeout: 10s
+  # Taille maximale du corps d'une requête relayée (1 Mio)
+  # env : PROXY_MAX_BODY_BYTES
+  max_body_bytes: 1048576
+
+# Table de routage : une entrée par API, nommée (users, orders…)
+# Pas de valeur par défaut : la route ci-dessous est un exemple.
+routes:
+  # le nom de la route (env : ROUTES_<NOM>_<CLÉ>)
+  users:
+    # Préfixe des chemins relayés (sous /api/)
+    # env : ROUTES_USERS_PREFIX
+    prefix: "/api/users"
+    # URL du backend qui remplace le préfixe
+    # env : ROUTES_USERS_TARGET
+    target: "http://localhost:8091/api/v1/users"
+    # Délai de cette route (facultatif : proxy.default_timeout)
+    # env : ROUTES_USERS_TIMEOUT
+    timeout: 5s
+
+# Journal
+log:
+  # Niveau : debug, info, warn ou error
+  # env : LOG_LEVEL
+  level: "info"
+  # Format : json (production) ou text (développement)
+  # env : LOG_FORMAT
+  format: "json"
+
+# Traces OpenTelemetry, envoyées au collecteur
+telemetry:
+  # Envoyer les traces au collecteur OpenTelemetry
+  # env : TELEMETRY_ENABLED
+  enabled: false
+  # URL du collecteur, en OTLP HTTP
+  # env : TELEMETRY_ENDPOINT
+  endpoint: "http://localhost:4318"
+  # Part des nouvelles traces gardées, de 0 à 1 (une trace commencée ailleurs garde sa décision)
+  # env : TELEMETRY_SAMPLE_RATIO
+  sample_ratio: 1
+
+# Arrêt
+shutdown:
+  # Temps laissé aux traitements en cours, à l'arrêt
+  # env : SHUTDOWN_TIMEOUT
+  timeout: 15s
