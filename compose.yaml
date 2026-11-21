@@ -1,0 +1,21 @@
+# Environnement de développement.
+#   make up     le collecteur OpenTelemetry et Jaeger (attend qu'ils soient prêts)
+#   make down   arrête et supprime les données
+name: go-bff-skeleton
+
+services:
+  # Le collecteur OpenTelemetry : le BFF lui envoie ses traces (OTLP, 4317 en
+  # gRPC, 4318 en HTTP), il les relaie vers Jaeger. Sa configuration :
+  # deploy/otel-collector.yaml.
+  otel-collector:
+    image: docker.io/otel/opentelemetry-collector-contrib:0.140.1
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes: ["./deploy/otel-collector.yaml:/etc/otelcol/config.yaml:ro,z"]
+    ports: ["4317:4317", "4318:4318", "13133:13133"]
+    depends_on: [jaeger]
+
+  # Jaeger reçoit les traces du collecteur ; son interface est sur
+  # http://localhost:16686.
+  jaeger:
+    image: docker.io/jaegertracing/jaeger:2.22.0
+    ports: ["16686:16686"]

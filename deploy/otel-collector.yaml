@@ -1,0 +1,46 @@
+# Configuration du collecteur OpenTelemetry (compose.yaml).
+#
+# Les applications envoient leur télémétrie au collecteur (OTLP), qui la
+# traite et la relaie vers les backends : changer de backend (Tempo, un
+# service hébergé…) ne touche que ce fichier, pas le code.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Protège le collecteur d'un afflux de données : il refuse plutôt que de
+  # s'arrêter faute de mémoire.
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+  # Envoie par lots : moins d'appels réseau vers les backends.
+  batch:
+    timeout: 1s
+
+exporters:
+  # Les traces vers Jaeger (OTLP natif).
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  # Un résumé de ce qui passe, dans le journal du collecteur :
+  # docker compose logs otel-collector. Passer à « detailed » pour tout voir.
+  debug:
+    verbosity: basic
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/jaeger, debug]
