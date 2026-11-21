@@ -3,13 +3,13 @@ GOLANGCI_IMAGE := docker.io/golangci/golangci-lint:v2.15.0
 # Podman sans root : keep-id garde l'identité de l'utilisateur dans le conteneur.
 CONTAINER_USER := $(if $(shell docker --version 2>/dev/null | grep -i podman),--userns=keep-id,--user $(shell id -u):$(shell id -g))
 
-.PHONY: help build test check lint vuln cover clean config-reference run up down mock-users mock-orders
+.PHONY: help build test check lint vuln cover clean config-reference run up down mock-users mock-orders web web-dev web-lint
 
 ## help : liste les cibles
 help:
 	@grep -h '^## ' $(MAKEFILE_LIST) | sed 's/^## //'
 
-## build : compile les programmes dans bin/
+## build : compile les programmes dans bin/ (lancer make web avant, pour embarquer l'application)
 build:
 	go build -o bin/ ./cmd/...
 
@@ -40,6 +40,23 @@ mock-users:
 	go run ./cmd/mock-users -address :8091 -delay $(DELAY) -fail $(FAIL) -telemetry-endpoint http://localhost:4318
 mock-orders:
 	go run ./cmd/mock-orders -address :8092 -delay $(DELAY) -fail $(FAIL) -telemetry-endpoint http://localhost:4318
+
+# Le frontend se construit dans un conteneur Node : rien à installer.
+NODE_IMAGE := docker.io/library/node:24-alpine
+NODE = docker run --rm $(CONTAINER_USER) -e HOME=/tmp -e npm_config_cache=/tmp/.npm \
+	--volume "$(CURDIR)/frontend:/app" --workdir /app
+
+## web : construit l'application React (frontend/dist), qu'embarque ensuite le BFF
+web:
+	$(NODE) $(NODE_IMAGE) sh -c 'npm ci --no-audit --no-fund && npm run build'
+
+## web-dev : serveur Vite (http://localhost:5173) avec rechargement à chaud ; /api vers le BFF (make run)
+web-dev:
+	$(NODE) -it --network host $(NODE_IMAGE) sh -c 'npm ci --no-audit --no-fund && npm run dev'
+
+## web-lint : oxlint et vérification des types du frontend
+web-lint:
+	$(NODE) $(NODE_IMAGE) sh -c 'npm ci --no-audit --no-fund && npm run lint && npx tsc -b'
 
 ## check : formatage, analyse statique et tests (avant chaque commit)
 check:

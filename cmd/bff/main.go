@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/laurentpoirierfr/go-bff-skeleton/frontend"
 	"github.com/laurentpoirierfr/go-bff-skeleton/internal/compose"
 	"github.com/laurentpoirierfr/go-bff-skeleton/internal/platform/config"
 	"github.com/laurentpoirierfr/go-bff-skeleton/internal/platform/health"
@@ -24,6 +25,7 @@ import (
 	"github.com/laurentpoirierfr/go-bff-skeleton/internal/platform/telemetry"
 	"github.com/laurentpoirierfr/go-bff-skeleton/internal/platform/version"
 	"github.com/laurentpoirierfr/go-bff-skeleton/internal/proxy"
+	"github.com/laurentpoirierfr/go-bff-skeleton/internal/web"
 )
 
 func main() {
@@ -91,6 +93,13 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	} else {
 		log.Warn("composition disabled: routes users and orders are required")
 	}
+
+	// L'application React embarquée : tout ce qui n'est ni /api/, ni une sonde.
+	app, err := web.Handler(frontend.Dist(), web.Options{CSP: cfg.Web.CSP})
+	if err != nil {
+		return err
+	}
+	mux.Handle("/", app)
 
 	srv := &http.Server{
 		Addr:              cfg.HTTP.Address,

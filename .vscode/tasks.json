@@ -10,6 +10,21 @@
             "problemMatcher": []
         },
         {
+            "label": "frontend : construire",
+            "detail": "make web : npm ci et npm run build (conteneur Node), pour que le BFF embarque l'application",
+            "type": "shell",
+            "command": "make web",
+            "problemMatcher": []
+        },
+        {
+            "label": "frontend : serveur de développement",
+            "detail": "make web-dev : Vite sur http://localhost:5173, rechargement à chaud, /api vers le BFF",
+            "type": "shell",
+            "command": "make web-dev",
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
             "label": "dépendances : arrêter",
             "detail": "make down : arrête les conteneurs et supprime leurs données",
             "type": "shell",
