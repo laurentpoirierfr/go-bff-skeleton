@@ -42,6 +42,23 @@ make config-reference              # régénère reference.yaml et bff.env.examp
 set -a; . ./configs/bff.env.example; set +a; go run ./cmd/bff   # par l'environnement seul
 ```
 
+## Images Docker
+
+Un seul `Dockerfile` construit les trois binaires (`--build-arg APP=bff`,
+`mock-users` ou `mock-orders`), en trois étapes : Node construit l'application
+React, Go compile le binaire en l'embarquant, et l'image finale
+(`distroless/static:nonroot`, une vingtaine de Mo) ne contient que le binaire
+et sa configuration.
+
+```bash
+make images     # go-bff-skeleton-bff, -mock-users, -mock-orders
+make up-apps    # le BFF, les deux services simulés, le collecteur et Jaeger : http://localhost:8080
+```
+
+Dans `compose.yaml`, le BFF reçoit les adresses des services par
+l'environnement (`ROUTES_USERS_TARGET=http://mock-users:8091/api/v1/users`) :
+c'est ainsi qu'on adapte la table de routage à chaque déploiement.
+
 ## Développement
 
 ```bash

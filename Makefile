@@ -3,7 +3,7 @@ GOLANGCI_IMAGE := docker.io/golangci/golangci-lint:v2.15.0
 # Podman sans root : keep-id garde l'identité de l'utilisateur dans le conteneur.
 CONTAINER_USER := $(if $(shell docker --version 2>/dev/null | grep -i podman),--userns=keep-id,--user $(shell id -u):$(shell id -g))
 
-.PHONY: help build test check lint vuln cover clean config-reference run up down mock-users mock-orders web web-dev web-lint
+.PHONY: help build test check lint vuln cover clean config-reference run up down mock-users mock-orders web web-dev web-lint images up-apps
 
 ## help : liste les cibles
 help:
@@ -21,13 +21,27 @@ test:
 config-reference:
 	UPDATE_CONFIG_REFERENCE=1 go test -count=1 -run 'TestReferenceUpToDate|TestEnvExample' ./internal/platform/config
 
+# La version des images : le dernier tag, et le commit s'il y en a d'autres depuis.
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+IMAGE ?= go-bff-skeleton
+
+## images : construit les images du BFF et des deux services simulés (IMAGE, VERSION)
+images:
+	docker build --build-arg APP=bff --build-arg VERSION=$(VERSION) -t $(IMAGE)-bff:$(VERSION) .
+	docker build --build-arg APP=mock-users --build-arg PORT=8091 --build-arg VERSION=$(VERSION) -t $(IMAGE)-mock-users:$(VERSION) .
+	docker build --build-arg APP=mock-orders --build-arg PORT=8092 --build-arg VERSION=$(VERSION) -t $(IMAGE)-mock-orders:$(VERSION) .
+
 ## up : démarre le collecteur OpenTelemetry et Jaeger (http://localhost:16686)
 up:
 	docker compose up -d --wait
 
-## down : arrête les conteneurs et supprime leurs données
+## up-apps : comme up, plus le BFF et les deux services simulés, construits depuis le Dockerfile (http://localhost:8080)
+up-apps:
+	docker compose --profile apps up -d --build --wait
+
+## down : arrête tout et supprime les données
 down:
-	docker compose down -v
+	docker compose --profile apps down -v
 
 ## run : lance le BFF avec configs/bff.yaml
 run:

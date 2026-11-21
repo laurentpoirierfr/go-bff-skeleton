@@ -1,6 +1,7 @@
 # Environnement de développement.
-#   make up     le collecteur OpenTelemetry et Jaeger (attend qu'ils soient prêts)
-#   make down   arrête et supprime les données
+#   make up       le collecteur OpenTelemetry et Jaeger (attend qu'ils soient prêts)
+#   make up-apps  plus le BFF et les deux services simulés : http://localhost:8080
+#   make down     arrête et supprime les données
 name: go-bff-skeleton
 
 services:
@@ -19,3 +20,35 @@ services:
   jaeger:
     image: docker.io/jaegertracing/jaeger:2.22.0
     ports: ["16686:16686"]
+
+  # Le BFF et les deux services simulés, construits depuis le Dockerfile. Ils
+  # ne démarrent qu'avec le profil « apps » : make up ne lance que les
+  # dépendances, pour développer avec go run.
+  bff:
+    profiles: [apps]
+    build: { context: ., args: { APP: bff, PORT: "8080" } }
+    environment:
+      # La table de routage de configs/bff.yaml, avec les adresses du réseau
+      # compose.
+      ROUTES_USERS_TARGET: http://mock-users:8091/api/v1/users
+      ROUTES_ORDERS_TARGET: http://mock-orders:8092/api/v1/orders
+      TELEMETRY_ENABLED: "true"
+      TELEMETRY_ENDPOINT: http://otel-collector:4318
+    ports: ["8080:8080"]
+    depends_on: [mock-users, mock-orders, otel-collector]
+
+  mock-users:
+    profiles: [apps]
+    build: { context: ., args: { APP: mock-users, PORT: "8091" } }
+    environment:
+      HTTP_ADDRESS: ":8091"
+      TELEMETRY_ENDPOINT: http://otel-collector:4318
+    ports: ["8091:8091"]
+
+  mock-orders:
+    profiles: [apps]
+    build: { context: ., args: { APP: mock-orders, PORT: "8092" } }
+    environment:
+      HTTP_ADDRESS: ":8092"
+      TELEMETRY_ENDPOINT: http://otel-collector:4318
+    ports: ["8092:8092"]

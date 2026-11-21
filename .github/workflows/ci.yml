@@ -53,3 +53,24 @@ jobs:
       - uses: golangci/golangci-lint-action@v9
         with:
           version: v2.15.0
+
+  frontend:
+    name: Frontend (oxlint, types, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Les mêmes commandes qu'en local, dans le même conteneur Node.
+      - name: Lint et types
+        run: make web-lint
+      - name: Build
+        run: make web
+
+  images:
+    name: Images Docker (bff et services simulés)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Construit les images sans les publier : le Dockerfile (Node, Go,
+      # distroless) reste valide à chaque modification.
+      - name: Construction
+        run: make images VERSION=ci
