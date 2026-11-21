@@ -13,6 +13,12 @@ Squelette de **BFF** (*Backend For Frontend*) en Go :
 Deux services simulés (`mock-users`, `mock-orders`) montrent le
 fonctionnement.
 
+## Schémas
+
+Le dossier [`assets/`](assets/README.md) décrit le BFF en schémas :
+architecture, aiguillage d'une requête, proxy, composition, construction et
+livraison, configuration, exécution. `make diagrams` vérifie qu'ils se rendent.
+
 ## Configuration
 
 Le BFF lit, par ordre de priorité croissante :

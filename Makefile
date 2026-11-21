@@ -3,7 +3,7 @@ GOLANGCI_IMAGE := docker.io/golangci/golangci-lint:v2.15.0
 # Podman sans root : keep-id garde l'identité de l'utilisateur dans le conteneur.
 CONTAINER_USER := $(if $(shell docker --version 2>/dev/null | grep -i podman),--userns=keep-id,--user $(shell id -u):$(shell id -g))
 
-.PHONY: help build test check lint vuln cover clean config-reference run up down mock-users mock-orders web web-dev web-lint images up-apps e2e
+.PHONY: help build test check lint vuln cover clean config-reference run up down mock-users mock-orders web web-dev web-lint images up-apps e2e diagrams
 
 ## help : liste les cibles
 help:
@@ -75,6 +75,16 @@ web-lint:
 ## e2e : teste les binaires compilés (BFF et services simulés), lancés comme des processus ; make web avant, pour tester aussi l'application
 e2e:
 	go test -count=1 -v ./test/e2e
+
+MERMAID_IMAGE := docker.io/minlag/mermaid-cli:11.12.0
+
+## diagrams : vérifie que les schémas Mermaid d'assets/ se rendent sans erreur
+diagrams:
+	@for f in assets/*.md; do \
+		echo "$$f"; \
+		docker run --rm --volume "$(CURDIR)/assets:/data:ro" $(MERMAID_IMAGE) \
+			-i "/data/$$(basename $$f)" -o "/tmp/$$(basename $$f)" -q || exit 1; \
+		done
 
 ## check : formatage, analyse statique et tests (avant chaque commit)
 check:
