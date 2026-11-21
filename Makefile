@@ -3,7 +3,7 @@ GOLANGCI_IMAGE := docker.io/golangci/golangci-lint:v2.15.0
 # Podman sans root : keep-id garde l'identité de l'utilisateur dans le conteneur.
 CONTAINER_USER := $(if $(shell docker --version 2>/dev/null | grep -i podman),--userns=keep-id,--user $(shell id -u):$(shell id -g))
 
-.PHONY: help build test check lint vuln cover clean config-reference run up down
+.PHONY: help build test check lint vuln cover clean config-reference run up down mock-users mock-orders
 
 ## help : liste les cibles
 help:
@@ -32,6 +32,14 @@ down:
 ## run : lance le BFF avec configs/bff.yaml
 run:
 	go run ./cmd/bff -config configs/bff.yaml
+
+## mock-users, mock-orders : les services simulés (:8091, :8092) ; DELAY=2s, FAIL=0.3 pour simuler un backend lent ou en panne
+DELAY ?= 0s
+FAIL ?= 0
+mock-users:
+	go run ./cmd/mock-users -address :8091 -delay $(DELAY) -fail $(FAIL) -telemetry-endpoint http://localhost:4318
+mock-orders:
+	go run ./cmd/mock-orders -address :8092 -delay $(DELAY) -fail $(FAIL) -telemetry-endpoint http://localhost:4318
 
 ## check : formatage, analyse statique et tests (avant chaque commit)
 check:

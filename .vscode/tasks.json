@@ -1,0 +1,20 @@
+{
+    // Tâches utilisées par launch.json, et disponibles dans « Run Task ».
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "dépendances : démarrer",
+            "detail": "collecteur OpenTelemetry et Jaeger (make up), attend qu'ils soient prêts",
+            "type": "shell",
+            "command": "make up",
+            "problemMatcher": []
+        },
+        {
+            "label": "dépendances : arrêter",
+            "detail": "make down : arrête les conteneurs et supprime leurs données",
+            "type": "shell",
+            "command": "make down",
+            "problemMatcher": []
+        }
+    ]
+}

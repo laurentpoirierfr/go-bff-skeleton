@@ -11,5 +11,8 @@ coverage.*
 # Réglages locaux
 .env
 .idea/
-.vscode/
+# VS Code : les lancements et les tâches sont partagés, le reste est personnel.
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
 .claude/settings.local.json
