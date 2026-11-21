@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,6 +22,7 @@ import (
 	"github.com/laurentpoirierfr/go-bff-skeleton/internal/platform/runner"
 	"github.com/laurentpoirierfr/go-bff-skeleton/internal/platform/telemetry"
 	"github.com/laurentpoirierfr/go-bff-skeleton/internal/platform/version"
+	"github.com/laurentpoirierfr/go-bff-skeleton/internal/proxy"
 )
 
 func main() {
@@ -71,6 +73,15 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	mux := http.NewServeMux()
 	h.Register(mux)
 
+	routes, err := proxyRoutes(cfg)
+	if err != nil {
+		return err
+	}
+	proxy.Register(mux, routes, proxy.Options{MaxBodyBytes: cfg.Proxy.MaxBodyBytes, Transport: proxy.Transport(), Log: log})
+	for _, r := range routes {
+		log.Info("route", "name", r.Name, "prefix", r.Prefix, "target", r.Target.Redacted(), "timeout", r.Timeout)
+	}
+
 	srv := &http.Server{
 		Addr:              cfg.HTTP.Address,
 		Handler:           httpmw.Chain(mux, httpmw.RequestID, httpmw.Tracing, httpmw.AccessLog(log), httpmw.Recover(log)),
@@ -80,6 +91,20 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 		IdleTimeout:       2 * time.Minute,
 	}
 	return runner.Run(ctx, log, runner.HTTPServer(srv, cfg.Shutdown.Timeout, h.ShuttingDown))
+}
+
+// proxyRoutes traduit la table de routage de la configuration.
+func proxyRoutes(cfg config.Config) ([]proxy.Route, error) {
+	var routes []proxy.Route
+	for _, name := range config.RouteNames(cfg.Routes) {
+		r := cfg.Routes[name]
+		target, err := url.Parse(r.Target)
+		if err != nil {
+			return nil, fmt.Errorf("routes.%s.target: %w", name, err)
+		}
+		routes = append(routes, proxy.Route{Name: name, Prefix: r.Prefix, Target: target, Timeout: r.Timeout})
+	}
+	return routes, nil
 }
 
 // configOptions lit les options de la ligne de commande : le fichier désigné
