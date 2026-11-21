@@ -85,3 +85,8 @@ make run     # le BFF
 
 Les branches suivent git flow : `develop` pour le travail courant, `main` pour
 les versions publiées.
+
+## Licence
+
+[MIT](LICENSE) : réutilisation libre, y compris commerciale, en gardant la
+mention de copyright.
