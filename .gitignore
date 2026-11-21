@@ -1,0 +1,15 @@
+# Binaires
+/bin/
+*.exe
+*.test
+*.out
+
+# Couverture et profils
+coverage.*
+*.prof
+
+# Réglages locaux
+.env
+.idea/
+.vscode/
+.claude/settings.local.json

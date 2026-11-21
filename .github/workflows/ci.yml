@@ -1,0 +1,55 @@
+# Intégration continue : formatage, analyse, tests avec le détecteur de
+# courses, vulnérabilités et linters, à chaque push et pull request.
+name: CI
+
+on:
+  push:
+    branches: [main, develop, "feature/**", "release/**", "hotfix/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verifications:
+    name: Format, analyse, tests et vulnérabilités
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Formatage (gofmt)
+        run: |
+          fichiers=$(gofmt -l .)
+          if [ -n "$fichiers" ]; then
+            echo "Fichiers à formater avec gofmt :"
+            echo "$fichiers"
+            exit 1
+          fi
+
+      - name: Analyse statique (go vet)
+        run: go vet ./...
+
+      - name: Tests, avec le détecteur de courses
+        run: go test -race ./...
+
+      - name: Vulnérabilités (govulncheck)
+        run: go tool govulncheck ./...
+
+  lint:
+    name: Linters (golangci-lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.15.0
