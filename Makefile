@@ -3,7 +3,7 @@ GOLANGCI_IMAGE := docker.io/golangci/golangci-lint:v2.15.0
 # Podman sans root : keep-id garde l'identité de l'utilisateur dans le conteneur.
 CONTAINER_USER := $(if $(shell docker --version 2>/dev/null | grep -i podman),--userns=keep-id,--user $(shell id -u):$(shell id -g))
 
-.PHONY: help build test check lint vuln cover clean config-reference run up down mock-users mock-orders web web-dev web-lint images up-apps
+.PHONY: help build test check lint vuln cover clean config-reference run up down mock-users mock-orders web web-dev web-lint images up-apps e2e
 
 ## help : liste les cibles
 help:
@@ -71,6 +71,10 @@ web-dev:
 ## web-lint : oxlint et vérification des types du frontend
 web-lint:
 	$(NODE) $(NODE_IMAGE) sh -c 'npm ci --no-audit --no-fund && npm run lint && npx tsc -b'
+
+## e2e : teste les binaires compilés (BFF et services simulés), lancés comme des processus ; make web avant, pour tester aussi l'application
+e2e:
+	go test -count=1 -v ./test/e2e
 
 ## check : formatage, analyse statique et tests (avant chaque commit)
 check:

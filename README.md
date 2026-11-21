@@ -59,6 +59,14 @@ Dans `compose.yaml`, le BFF reçoit les adresses des services par
 l'environnement (`ROUTES_USERS_TARGET=http://mock-users:8091/api/v1/users`) :
 c'est ainsi qu'on adapte la table de routage à chaque déploiement.
 
+## Tests
+
+| Niveau | Ce qui est testé | Commande |
+|--------|------------------|----------|
+| unitaires | configuration, proxy (réécriture, en-têtes, erreurs), composition (parallélisme, mode dégradé, aucune fuite de détail interne), service de l'application (cache, gzip, retour à index.html), services simulés | `make check` |
+| bout en bout | les binaires compilés : le BFF, configuré par l'environnement seul, face aux deux services simulés ; proxy, composition, application, pannes et délais | `make e2e` |
+| frontend | oxlint, types, build | `make web-lint`, `make web` |
+
 ## Développement
 
 ```bash
